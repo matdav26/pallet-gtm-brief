@@ -576,9 +576,11 @@ const readyScore = (m) => CORE.filter(b => has(m, b)).length;
 const peersAbroad = DATA.q2.filter(c => !c.is_pallet).flatMap(abroadMarkets);
 const peerGap = median(peersAbroad.map(gapDays).filter(d => d !== null));
 
+const score = (m) => readyScore(m);
 function nextHire(m) {
   const missing = CORE.filter(b => !has(m, b));
   if (m.home) return missing.length ? `Add a ${SHORT[missing[0]]}` : "Base in place: scale capacity (see Q1)";
+  if (!has(m, "Seller") && score(m) > 0) return "A seller to carry the pipeline";
   if (!has(m, "Seller")) {
     const se = m.peers.find(p => !p.home && p.first_bucket === "SE"), lead = m.peers.find(p => !p.home && p.first_bucket === "Leader");
     return se ? `Open with a sales engineer, as ${se.name} did` : lead ? `Open with a local leader, as ${lead.name} did` : "Open with a seller, peers' usual first hire";
@@ -620,7 +622,7 @@ function renderExec() {
   const hr = DATA.q2.find(c => c.name === "HappyRobot"), london = DATA.q3.find(m => m.label === "London");
   const sellerFirst = peersAbroad.filter(m => m.events[0].b === "Seller").length;
   $("#exec-summary").innerHTML = [
-    `<b>Pace (Q1).</b> HappyRobot posts ${HR.per_100} GTM roles per 100 employees to Pallet's ${P.per_100}, and staffs ${abroadMarkets(hr).length} countries abroad to Pallet's 1.`,
+    `<b>Pace (Q1).</b> HappyRobot posts ${HR.per_100} GTM roles per 100 employees to Pallet's ${P.per_100}, and staffs ${abroadMarkets(hr).length} countries abroad to Pallet's ${abroadMarkets(DATA.q2.find(c => c.is_pallet)).length}.`,
     `<b>Playbook (Q2).</b> Companies ahead of Pallet open a market with one seller (${sellerFirst} of ${peersAbroad.length} markets), add a second role about ${span(peerGap)} later, and grow it with a sales engineer and a local leader.`,
     `<b>Next hires (Q3).</b> Pallet's US base is in place. London has ${london.pallet.Seller || 0} seller roles but no sales engineer; Dubai, Seoul and Tokyo each have one senior hire. The next hire in each market is a sales engineer.`,
   ].map(s => `<li>${s}</li>`).join("");
