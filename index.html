@@ -602,14 +602,22 @@ function initQ2() {
   document.querySelectorAll("#q2-tabs button").forEach((b, i) => b.addEventListener("click", () => renderQ2(i)));
   renderQ2(0);
 
-  // Draft "so what", computed across the three companies' markets abroad.
-  const peers = DATA.q2.filter(c => !c.is_pallet);  // Pallet has its own tab but is not part of the benchmark
-  const all = peers.flatMap(abroadMarkets), sellerFirst = all.filter(m => m.events[0].b === "Seller").length;
-  const gaps = all.map(gapDays).filter(d => d !== null);
-  const podText = peers.map(c => [c.name, pods(c)]).filter(([, p]) => p.length).map(([nm, p]) => `${nm} in ${p.join(", ")}`).join("; ");
+  // Draft "so what": per-company gaps with Pallet, most useful first (same method as Q1).
+  const view = (n) => DATA.q2.find(c => c.name === n), pv = DATA.q2.find(c => c.is_pallet);
+  const types = (c, homeToo = true) => {
+    const t = {};
+    c.markets.filter(m => homeToo || !m.home).forEach(m => m.events.forEach(e => t[e.b] = (t[e.b] || 0) + 1));
+    return t;
+  };
+  const withType = (c, b) => abroadMarkets(c).filter(m => m.events.some(e => e.b === b)).length;
+  const si = view("Sierra"), tk = view("Taktile"), hr = view("HappyRobot");
+  const pT = types(pv), tkT = types(tk), uk = abroadMarkets(pv).find(m => m.name === "United Kingdom");
+  const spain = abroadMarkets(hr).find(m => m.name === "Spain");
+  const n = (x) => x || 0;
   $("#q2-sowhat").innerHTML = [
-    `<b>Entry.</b> Companies ahead of Pallet open a market with one front-line hire: a seller in ${sellerFirst} of ${all.length} markets.`,
-    `<b>Depth.</b> The second role follows a median of ${span(median(gaps))} after the first, and markets that grow add a sales engineer and a local leader (${podText}).`,
+    `<b>Sierra: a leader and a sales engineer in every market.</b> ${withType(si, "SE")} of its ${abroadMarkets(si).length} markets abroad have a sales engineer and ${withType(si, "Leader")} a local leader; Seoul opened with a seller, a sales engineer and a leader at once. Pallet's London has ${uk ? uk.events.length : 0} sellers but no leader or sales engineer, and Tokyo and Seoul are one director each: who leads and supports them?`,
+    `<b>Taktile: sales engineers open the market.</b> ${n(tkT.SE)} sales engineers for ${n(tkT.Seller)} sellers; its first hire in London and São Paulo was a sales engineer, to win the technical evaluation before the deal. Pallet has ${n(pT.SE)} sales engineer for ${n(pT.Seller)} sellers, none abroad: who wins the technical evaluation in its new markets?`,
+    `<b>HappyRobot: a seller first, then a hub.</b> All ${abroadMarkets(hr).length} of its markets opened with a seller; Spain then grew into a hub of ${spain ? spain.events.length : 0} roles (SDRs, a sales engineer, a launch lead, growth). Pallet follows the same seller-first entry: is London becoming its hub, and what does it need beyond sellers?`,
   ].map(s => `<li>${s}</li>`).join("");
 }
 
@@ -669,7 +677,7 @@ function renderExec() {
   const sellerFirst = peersAbroad.filter(m => m.events[0].b === "Seller").length;
   $("#exec-summary").innerHTML = [
     `<b>Pipeline (Q1).</b> HappyRobot opens each market with SDRs and a launch team (${HR.active_seats} roles in 12 months, ${HR.markets_abroad} countries abroad); Pallet's ${P.markets_abroad} markets abroad have no SDRs.`,
-    `<b>Playbook (Q2).</b> Companies ahead of Pallet open a market with one seller (${sellerFirst} of ${peersAbroad.length} markets), add a second role about ${span(peerGap)} later, and grow it with a sales engineer and a local leader.`,
+    `<b>Playbook (Q2).</b> Companies ahead of Pallet open a market with one hire, then back it: a local leader and a sales engineer (Sierra), sales engineers first (Taktile), a regional hub (HappyRobot). Pallet's markets abroad have sellers and one director.`,
     `<b>Next hires (Q3).</b> Pallet's US base is in place. London has ${london.pallet.Seller || 0} seller roles but no sales engineer; Dubai, Seoul and Tokyo each have one senior hire. The next hire in each market is a sales engineer.`,
   ].map(s => `<li>${s}</li>`).join("");
 }
