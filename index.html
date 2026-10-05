@@ -615,7 +615,7 @@ function initQ2() {
   const spain = abroadMarkets(hr).find(m => m.name === "Spain");
   const n = (x) => x || 0;
   $("#q2-sowhat").innerHTML = [
-    `<b>Sierra: a leader and a sales engineer in every market.</b> ${withType(si, "SE")} of its ${abroadMarkets(si).length} markets abroad have a sales engineer and ${withType(si, "Leader")} a local leader; Seoul opened with a seller, a sales engineer and a leader at once. Pallet's London has ${uk ? uk.events.length : 0} sellers but no leader or sales engineer, and Tokyo and Seoul are one director each: who leads and supports them?`,
+    `<b>Sierra: a leader and a sales engineer in most markets.</b> ${withType(si, "SE")} of its ${abroadMarkets(si).length} markets abroad have a sales engineer and ${withType(si, "Leader")} a local leader; Seoul opened with a seller, a sales engineer and a leader at once. Pallet's London has ${uk ? uk.events.length : 0} sellers but no leader or sales engineer, and Tokyo and Seoul are one director each: who leads and supports them?`,
     `<b>Taktile: sales engineers open the market.</b> ${n(tkT.SE)} sales engineers for ${n(tkT.Seller)} sellers; its first hire in London and São Paulo was a sales engineer, to win the technical evaluation before the deal. Pallet has ${n(pT.SE)} sales engineer for ${n(pT.Seller)} sellers, none abroad: who wins the technical evaluation in its new markets?`,
     `<b>HappyRobot: a seller first, then a hub.</b> All ${abroadMarkets(hr).length} of its markets opened with a seller; Spain then grew into a hub of ${spain ? spain.events.length : 0} roles (SDRs, a sales engineer, a launch lead, growth). Pallet follows the same seller-first entry: is London becoming its hub, and what does it need beyond sellers?`,
   ].map(s => `<li>${s}</li>`).join("");
