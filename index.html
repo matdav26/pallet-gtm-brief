@@ -270,9 +270,6 @@
       <div class="tabs toggle" role="tablist" aria-label="Time window" id="q1-window">
         <button role="tab" type="button" data-v="12m">Last 12 months</button><button role="tab" type="button" data-v="all">All time</button>
       </div>
-      <div class="tabs toggle" role="tablist" aria-label="Role view" id="q1-mode">
-        <button role="tab" type="button" data-v="count">Count</button><button role="tab" type="button" data-v="pct">Mix %</button>
-      </div>
     </div>
     <div class="legend" id="mix-legend"></div>
     <table class="q1">
@@ -427,30 +424,29 @@ function barPath(x0, y, w, h, r) {  // square at the baseline, 4px rounded data-
 const MONTHS = ["Jan","Feb","Mar","Apr","May","Jun","Jul","Aug","Sep","Oct","Nov","Dec"];
 const month = (ym) => ym ? `${MONTHS[+ym.slice(5, 7) - 1]} ${ym.slice(0, 4)}` : "";
 
-let q1Window = "12m", q1Mode = "count";
+let q1Window = "12m";
 
 function renderQ1() {
   const W12 = DATA.window_12m;
   const winLabel = q1Window === "12m" ? `${monthName(W12.start)} – ${monthName(W12.end)}` : "all time";
-  $("#q1-roles-h").textContent = `GTM roles posted, ${winLabel}${q1Mode === "pct" ? " · mix %" : ""}`;
+  $("#q1-roles-h").textContent = `GTM roles posted, ${winLabel}`;
   $("#q1-markets-h").textContent = q1Window === "12m" ? "Hiring abroad" : "Markets entered";
   document.querySelectorAll("#q1-window button").forEach(b => b.setAttribute("aria-selected", String(b.dataset.v === q1Window)));
-  document.querySelectorAll("#q1-mode button").forEach(b => b.setAttribute("aria-selected", String(b.dataset.v === q1Mode)));
   $("#mix-legend").innerHTML = DATA.buckets.map(b => `<span><i style="background:${colorOf(b)}"></i>${b}</span>`).join("");
 
   const view = DATA.companies.map(c => ({ ...c, ...c.windows[q1Window] })).sort((a, b) => b.active_seats - a.active_seats);
   const max = Math.max(...view.map(r => r.active_seats));
   $("#q1-rows").innerHTML = view.map(c => {
-    const W = 300, segs = DATA.buckets.filter(b => c.mix[b] > 0), pct = q1Mode === "pct";
-    const scale = pct ? (W - 44) / (c.active_seats || 1) : (W - 34) / max;
+    const W = 300, segs = DATA.buckets.filter(b => c.mix[b] > 0);
+    const scale = (W - 34) / max;  // bar length shows scale; the share prints inside segments wide enough to hold it
     let acc = 0, svg = `<svg viewBox="0 0 ${W} 22" width="100%" role="img" aria-label="${esc(c.name)} GTM roles by function">`;
     segs.forEach((b, j) => {
       const x0 = acc * scale, last = j === segs.length - 1, w = Math.max(c.mix[b] * scale - (last ? 0 : 2), 1);
       svg += last ? `<path d="${barPath(x0, 2, w, 18, 4)}" fill="${colorOf(b)}"/>` : `<rect x="${x0}" y="2" width="${w}" height="18" fill="${colorOf(b)}"/>`;
-      if (pct && w > 30) svg += `<text x="${x0 + w / 2}" y="15" text-anchor="middle" style="font-size:11px;fill:#fff;font-weight:600">${Math.round(c.mix[b] / c.active_seats * 100)}%</text>`;
+      if (w > 32) svg += `<text x="${x0 + w / 2}" y="15" text-anchor="middle" style="font-size:11px;fill:#fff;font-weight:600">${Math.round(c.mix[b] / c.active_seats * 100)}%</text>`;
       acc += c.mix[b];
     });
-    svg += `<text class="val" x="${acc * scale + 6}" y="15">${pct ? `n=${c.active_seats}` : c.active_seats}</text></svg>`;
+    svg += `<text class="val" x="${acc * scale + 6}" y="15">${c.active_seats}</text></svg>`;
     const tipHtml = `<div class="t">${esc(c.name)} · ${c.active_seats} GTM roles, ${winLabel}</div>` +
       segs.map(b => `${b}: ${c.mix[b]} (${Math.round(c.mix[b] / c.active_seats * 100)}%)`).join("<br>");
     const tot = c.senior + c.entry, n = c.markets_abroad, ctry = `${n} ${n === 1 ? "country" : "countries"} abroad`;
@@ -473,7 +469,6 @@ function renderQ1() {
 
 function initQ1() {
   document.querySelectorAll("#q1-window button").forEach(b => b.addEventListener("click", () => { q1Window = b.dataset.v; renderQ1(); }));
-  document.querySelectorAll("#q1-mode button").forEach(b => b.addEventListener("click", () => { q1Mode = b.dataset.v; renderQ1(); }));
   renderQ1();
   // Draft "so what", from the default 12-month window.
   const others = [AU, RA, VO].map(c => `${c.name} ${c.active_seats}`).join(", ");
